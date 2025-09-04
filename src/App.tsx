@@ -9,6 +9,7 @@ function App() {
   const [calculationResult, setCalculationResult] = useState<number | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string>('')
+  const [backendPort, setBackendPort] = useState<number | null>(null)
 
   // 测试与Electron的IPC通信
   const testElectronCommunication = async () => {
@@ -28,13 +29,19 @@ function App() {
     }
   }
 
-  // 调用Python后端API
+  // 通过Electron主进程调用Python后端API（推荐方式）
   const fetchSystemInfo = async () => {
     try {
+      if (!window.electron) {
+        setError('Electron API不可用');
+        return;
+      }
+      
       setLoading(true)
       setError('')
-      const response = await fetch('http://localhost:8000/system-info')
-      const data = await response.json()
+      
+      // 使用API转发功能
+      const data = await window.electron.apiRequest('GET', '/system-info')
       setSystemInfo(data)
     } catch (err) {
       setError('获取系统信息失败: ' + String(err))
@@ -43,23 +50,23 @@ function App() {
     }
   }
 
-  // 测试计算功能
+  // 测试计算功能（通过Electron主进程转发）
   const testCalculation = async () => {
     try {
+      if (!window.electron) {
+        setError('Electron API不可用');
+        return;
+      }
+      
       setLoading(true)
       setError('')
-      const response = await fetch('http://localhost:8000/calculate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          a: 10,
-          b: 5,
-          operation: 'add'
-        })
+      
+      // 使用API转发功能
+      const data = await window.electron.apiRequest('POST', '/calculate', {
+        a: 10,
+        b: 5,
+        operation: 'add'
       })
-      const data = await response.json()
       setCalculationResult(data.result)
     } catch (err) {
       setError('计算请求失败: ' + String(err))
@@ -67,11 +74,27 @@ function App() {
       setLoading(false)
     }
   }
+  
+  // 获取后端服务器端口
+  const fetchBackendPort = async () => {
+    try {
+      if (!window.electron) {
+        setError('Electron API不可用');
+        return;
+      }
+      
+      const port = await window.electron.getBackendPort();
+      setBackendPort(port);
+    } catch (err) {
+      setError('获取后端端口失败: ' + String(err));
+    }
+  }
 
-  // 组件挂载时检查Electron环境
+  // 组件挂载时检查Electron环境并获取后端端口
   useEffect(() => {
     if (window.electron) {
       setElectronMessage('已连接到Electron')
+      fetchBackendPort(); // 组件挂载时获取后端端口
     } else {
       setElectronMessage('在浏览器环境中运行')
     }
@@ -120,6 +143,9 @@ function App() {
                 <p><strong>平台:</strong> {systemInfo.platform}</p>
                 <p><strong>操作系统:</strong> {systemInfo.os}</p>
               </div>
+            )}
+            {backendPort && (
+              <p><strong>后端端口:</strong> {backendPort}</p>
             )}
           </div>
 

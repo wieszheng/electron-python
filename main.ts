@@ -3,6 +3,8 @@ import {join} from 'path'
 import {spawn} from 'child_process';
 import * as fs from "node:fs";
 import { ChildProcess } from 'node:child_process';
+import * as http from 'node:http';
+import * as https from 'node:https';
 
 // 确保应用是单实例的
 const gotTheLock = app.requestSingleInstanceLock();
@@ -13,6 +15,9 @@ if (!gotTheLock) {
 
 // Python后端服务器进程
 let pythonProcess: ChildProcess | null = null;
+// 后端服务器端口号
+const BACKEND_PORT = 8000;
+const BACKEND_HOST = '127.0.0.1';
 
 function startPythonServer() {
   // 启动Python后端服务
@@ -96,6 +101,67 @@ function createWindow() {
 // IPC通信示例
 ipcMain.on('ping', (event) => {
   event.reply('pong', 'Hello from Electron!');
+});
+
+// API请求转发处理
+ipcMain.handle('api-request', async (event, { method, endpoint, data }) => {
+  return new Promise((resolve, reject) => {
+    try {
+      // 构建完整的URL
+      const url = `http://${BACKEND_HOST}:${BACKEND_PORT}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+      
+      // 配置请求选项
+      const options: http.RequestOptions = {
+        method: method.toUpperCase(),
+        headers: {
+          'Content-Type': 'application/json',
+          // 可以添加其他需要的头信息
+        }
+      };
+      
+      // 发送请求
+      const req = http.request(url, options, (res) => {
+        let responseData = '';
+        
+        res.on('data', (chunk) => {
+          responseData += chunk;
+        });
+        
+        res.on('end', () => {
+          try {
+            // 尝试解析JSON响应
+            const parsedData = JSON.parse(responseData);
+            resolve(parsedData);
+          } catch (error) {
+            // 如果不是JSON响应，直接返回原始数据
+            resolve(responseData);
+          }
+        });
+      });
+      
+      // 处理请求错误
+      req.on('error', (error) => {
+        console.error('API request error:', error);
+        reject(new Error(`API request failed: ${error.message}`));
+      });
+      
+      // 如果有数据，发送数据
+      if (data) {
+        req.write(JSON.stringify(data));
+      }
+      
+      // 结束请求
+      req.end();
+    } catch (error) {
+      console.error('API request setup error:', error);
+      reject(new Error(`Failed to setup API request: ${error instanceof Error ? error.message : 'Unknown error'}`));
+    }
+  });
+});
+
+// 获取后端服务器端口
+ipcMain.handle('get-backend-port', () => {
+  return BACKEND_PORT;
 });
 
 // 应用事件
