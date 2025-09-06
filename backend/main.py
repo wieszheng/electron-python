@@ -36,6 +36,16 @@ class CalculateResponse(BaseModel):
 def read_root():
     return {"message": "Welcome to Electron Python App Backend!", "version": "1.0.0"}
 
+# 健康检查端点
+@app.get("/api/health")
+def health_check():
+    """健康检查端点，用于测试API连接"""
+    return {
+        "status": "healthy",
+        "message": "Backend service is running normally",
+        "timestamp": "2025-09-07"
+    }
+
 # 计算端点示例
 @app.post("/calculate", response_model=CalculateResponse)
 def calculate(request: CalculateRequest):

@@ -4,7 +4,14 @@ import {spawn} from 'child_process';
 import * as fs from "node:fs";
 import { ChildProcess } from 'node:child_process';
 import * as http from 'node:http';
-import * as https from 'node:https';
+// 使用 Electron 的 app.getAppPath() 获取应用路径
+const getAppDir = () => {
+  return app.isPackaged ? join(app.getAppPath(),"..") : process.cwd();
+};
+console.log('app.getAppPath()', app.getAppPath());
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+const __dirname = import.meta.dirname;
 
 // 确保应用是单实例的
 const gotTheLock = app.requestSingleInstanceLock();
@@ -18,12 +25,11 @@ let pythonProcess: ChildProcess | null = null;
 // 后端服务器端口号
 const BACKEND_PORT = 8000;
 const BACKEND_HOST = '127.0.0.1';
-
 function startPythonServer() {
   // 启动Python后端服务
   const isWindows = process.platform === 'win32';
-  const backendDir = join(app.getAppPath(), '..', 'backend');
-  const pythonExecutable = join(backendDir, isWindows ? 'venv\\Scripts\\python.exe' : 'venv/bin/python');
+  const backendDir = join(app.getAppPath(), 'backend');
+  const pythonExecutable = join(backendDir, isWindows ? '.venv\\Scripts\\python.exe' : 'venv/bin/python');
   const mainScript = join(backendDir, 'main.py');
 
   // 检查Python可执行文件是否存在
@@ -31,7 +37,6 @@ function startPythonServer() {
     console.error(`Python executable not found: ${pythonExecutable}`);
     return;
   }
-
   // 启动Python进程
   pythonProcess = spawn(pythonExecutable, [mainScript], {
     cwd: backendDir,
@@ -68,20 +73,21 @@ function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    // titleBarStyle: 'hidden',
+    autoHideMenuBar: true,
+    center: true,
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
-      nodeIntegration: false,
+      nodeIntegration: true,
       contextIsolation: true,
-      sandbox: true
+
     },
-    title: 'Electron Python App',
-    autoHideMenuBar: true
   });
 
   // 根据开发环境加载不同的URL
   if (app.isPackaged) {
     // 生产环境加载打包后的文件
-    mainWindow.loadFile(join(__dirname, '../dist/index.html'));
+    mainWindow.loadFile(join(getAppDir(), '../dist/index.html'));
   } else {
     // 开发环境加载Vite开发服务器
     mainWindow.loadURL('http://localhost:5173');
@@ -109,7 +115,7 @@ ipcMain.handle('api-request', async (event, { method, endpoint, data }) => {
     try {
       // 构建完整的URL
       const url = `http://${BACKEND_HOST}:${BACKEND_PORT}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
-      
+
       // 配置请求选项
       const options: http.RequestOptions = {
         method: method.toUpperCase(),
@@ -118,15 +124,15 @@ ipcMain.handle('api-request', async (event, { method, endpoint, data }) => {
           // 可以添加其他需要的头信息
         }
       };
-      
+
       // 发送请求
       const req = http.request(url, options, (res) => {
         let responseData = '';
-        
+
         res.on('data', (chunk) => {
           responseData += chunk;
         });
-        
+
         res.on('end', () => {
           try {
             // 尝试解析JSON响应
@@ -138,18 +144,18 @@ ipcMain.handle('api-request', async (event, { method, endpoint, data }) => {
           }
         });
       });
-      
+
       // 处理请求错误
       req.on('error', (error) => {
         console.error('API request error:', error);
         reject(new Error(`API request failed: ${error.message}`));
       });
-      
+
       // 如果有数据，发送数据
       if (data) {
         req.write(JSON.stringify(data));
       }
-      
+
       // 结束请求
       req.end();
     } catch (error) {
