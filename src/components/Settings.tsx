@@ -19,6 +19,27 @@ export function Settings() {
     apiStatus: "检测中...",
   });
 
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState("");
+  const [updateProgress, setUpdateProgress] = useState(0);
+
+  const handleCheckForUpdates = async () => {
+    try {
+      setIsCheckingUpdate(true);
+      setUpdateStatus("正在检查更新...");
+      setUpdateProgress(0);
+
+      await window.electron.checkForUpdates();
+    } catch (error) {
+      console.error("检查更新失败:", error);
+      setUpdateStatus(
+        `检查更新失败: ${error instanceof Error ? error.message : "未知错误"}`,
+      );
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
+
   useEffect(() => {
     if (window.electron) {
       console.log("Electron API可用，开始测试功能");
@@ -55,12 +76,27 @@ export function Settings() {
         .callApi("GET", "/api/health")
         .then((response) => {
           console.log("API测试成功:", response);
-          setElectronInfo((prev) => ({ ...prev, apiStatus: "API连接正常" }));
+          if (response.success) {
+            setElectronInfo((prev) => ({ ...prev, apiStatus: "API连接正常" }));
+          } else {
+            setElectronInfo((prev) => ({ ...prev, apiStatus: "API连接失败" }));
+          }
         })
         .catch((error) => {
           console.error("API测试失败:", error);
           setElectronInfo((prev) => ({ ...prev, apiStatus: "API连接失败" }));
         });
+
+      // 监听更新进度
+      const unsubscribeProgress = window.electron.onUpdateProgress(
+        (progress) => {
+          setUpdateProgress(progress);
+        },
+      );
+
+      return () => {
+        unsubscribeProgress();
+      };
     } else {
       console.warn("Electron API不可用");
       setElectronInfo({
@@ -143,6 +179,34 @@ export function Settings() {
               </span>
             </div>
           </div>
+        </div>
+
+        {/* 应用更新 */}
+        <div className="p-3">
+          <h3 className="text-lg font-semibold mb-4">应用更新</h3>
+          <Button onClick={handleCheckForUpdates} disabled={isCheckingUpdate}>
+            {isCheckingUpdate ? "检查中..." : "检查更新"}
+          </Button>
+
+          {updateStatus && (
+            <div className="mt-2 text-sm text-muted-foreground">
+              {updateStatus}
+            </div>
+          )}
+
+          {updateProgress > 0 && (
+            <div className="mt-2">
+              <div className="w-full bg-background border rounded-full h-2">
+                <div
+                  className="bg-primary h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${updateProgress}%` }}
+                ></div>
+              </div>
+              <div className="text-xs text-right text-muted-foreground mt-1">
+                {updateProgress}%
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-4 justify-center">

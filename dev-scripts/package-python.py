@@ -18,9 +18,14 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 class PythonPackager:
     def __init__(self, source_dir, output_dir, requirements_file):
-        self.source_dir = Path(source_dir)
-        self.output_dir = Path(output_dir)
-        self.requirements_file = Path(requirements_file)
+        # 获取脚本所在目录的绝对路径
+        script_dir = Path(__file__).parent.resolve()
+        # 解析源目录路径（支持相对路径）
+        self.source_dir = Path(source_dir) if Path(source_dir).is_absolute() else (script_dir / source_dir).resolve()
+        # 解析输出目录路径（支持相对路径）
+        self.output_dir = Path(output_dir) if Path(output_dir).is_absolute() else (script_dir / output_dir).resolve()
+        # 解析依赖文件路径（支持相对路径）
+        self.requirements_file = Path(requirements_file) if Path(requirements_file).is_absolute() else (script_dir / requirements_file).resolve()
         
     def log(self, message, level="INFO"):
         """打印日志信息"""

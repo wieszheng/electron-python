@@ -8,6 +8,10 @@ export interface ElectronAPI {
   callApi: (method: string, endpoint: string, data?: any) => Promise<any>;
   // 获取后端服务器端口
   getBackendPort: () => Promise<number>;
+  // 自动更新相关API
+  checkForUpdates: () => Promise<void>;
+  onUpdateProgress: (callback: (progress: number) => void) => () => void;
+  quitAndInstallUpdate: () => Promise<void>;
 }
 
 // 扩展Window接口，添加electron属性

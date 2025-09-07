@@ -22,20 +22,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # 定义请求体模型
 class CalculateRequest(BaseModel):
     a: float
     b: float
     operation: str  # add, subtract, multiply, divide
 
+
 # 定义响应体模型
 class CalculateResponse(BaseModel):
     result: float
+
 
 # 根端点
 @app.get("/")
 def read_root():
     return {"message": "Welcome to Electron Python App Backend!", "version": "1.0.0"}
+
 
 # 健康检查端点
 @app.get("/api/health")
@@ -46,6 +50,7 @@ def health_check():
         "message": "Backend service is running normally",
         "timestamp": "2025-09-07"
     }
+
 
 # 计算端点示例
 @app.post("/calculate", response_model=CalculateResponse)
@@ -63,8 +68,9 @@ def calculate(request: CalculateRequest):
         result = request.a / request.b
     else:
         raise HTTPException(status_code=400, detail="无效的操作")
-    
+
     return {"result": result}
+
 
 # 获取系统信息端点
 @app.get("/system-info")
@@ -78,6 +84,7 @@ def get_system_info():
     }
     return info
 
+
 # 文件操作示例端点
 @app.post("/file-content")
 def get_file_content(file_path: str):
@@ -86,13 +93,14 @@ def get_file_content(file_path: str):
         # 简单的安全检查，防止路径遍历攻击
         if ".." in file_path or not os.path.exists(file_path):
             raise HTTPException(status_code=403, detail="无效的文件路径")
-        
+
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
-        
+
         return {"content": content}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 # 启动服务器
 if __name__ == "__main__":
@@ -101,8 +109,7 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
     uvicorn.run(
-        "main:app", 
-        host="127.0.0.1", 
+        app,
+        host="127.0.0.1",
         port=args.port,
-        reload=True,  # 在开发环境中启用热重载
     )

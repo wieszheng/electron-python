@@ -23,6 +23,12 @@ __pycache__
 # Electron build output
 dist-electron
 
+# Python packaged code
+dist-python
+
+# Build output
+release
+
 node_modules
 dist
 dist-ssr

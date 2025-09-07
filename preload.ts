@@ -16,4 +16,21 @@ contextBridge.exposeInMainWorld("electron", {
   getBackendPort: (): Promise<number> => {
     return ipcRenderer.invoke("get-backend-port");
   },
+
+  // 自动更新相关API
+  checkForUpdates: (): Promise<void> => {
+    return ipcRenderer.invoke("check-for-updates");
+  },
+
+  // 监听更新进度事件
+  onUpdateProgress: (callback: (progress: number) => void) => {
+    const listener = (_event: any, progress: number) => callback(progress);
+    ipcRenderer.on("update-progress", listener);
+    return () => ipcRenderer.removeListener("update-progress", listener);
+  },
+
+  // 立即安装更新
+  quitAndInstallUpdate: (): Promise<void> => {
+    return ipcRenderer.invoke("quit-and-install-update");
+  },
 });
