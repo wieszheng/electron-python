@@ -4,6 +4,7 @@ from pydantic import BaseModel
 import uvicorn
 import sys
 import os
+import argparse
 
 # 创建FastAPI应用实例
 app = FastAPI(
@@ -96,10 +97,12 @@ def get_file_content(file_path: str):
 # 启动服务器
 if __name__ == "__main__":
     # 在实际应用中，host可以设置为"127.0.0.1"以限制只能从本地访问
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--port", type=int, default=8000)
+    args = parser.parse_args()
     uvicorn.run(
         "main:app", 
         host="127.0.0.1", 
-        port=8000, 
+        port=args.port,
         reload=True,  # 在开发环境中启用热重载
-        log_level="info"
     )

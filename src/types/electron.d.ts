@@ -5,7 +5,7 @@ export interface ElectronAPI {
   electron: () => string;
   chrome: () => string;
   // API请求转发
-  apiRequest: <T>(method: string, endpoint: string, data?: any) => Promise<T>;
+  callApi: (method: string, endpoint: string, data?: any) => Promise<any>;
   // 获取后端服务器端口
   getBackendPort: () => Promise<number>;
 }

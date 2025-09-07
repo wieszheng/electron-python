@@ -1,17 +1,17 @@
-import {useState} from "react";
+import { useState } from "react";
 
-import {ThemeProvider} from "@/components/theme-provider";
-import {Sidebar} from "@/components/sidebar";
-import {ChevronRight} from "lucide-react";
-import { ProjectManagement } from "@/components/Project"
-import {Settings} from "@/components/Settings";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Sidebar } from "@/components/sidebar";
+import { ChevronRight } from "lucide-react";
+import { ProjectManagement } from "@/components/Project";
+import { Settings } from "@/components/Settings";
 function DashboardPage() {
   return (
     <div className="flex-1 p-6 overflow-auto">
       <h1 className="text-2xl font-bold mb-4">仪表盘</h1>
       <p className="text-muted-foreground">这里是仪表盘页面内容</p>
     </div>
-  )
+  );
 }
 
 function AIAnalysisPage() {
@@ -20,7 +20,7 @@ function AIAnalysisPage() {
       <h1 className="text-2xl font-bold mb-4">AI 分析</h1>
       <p className="text-muted-foreground">这里是AI分析页面内容</p>
     </div>
-  )
+  );
 }
 
 function ReportsPage() {
@@ -29,7 +29,7 @@ function ReportsPage() {
       <h1 className="text-2xl font-bold mb-4">测试报告</h1>
       <p className="text-muted-foreground">这里是测试报告页面内容</p>
     </div>
-  )
+  );
 }
 
 function AutomationPage() {
@@ -38,7 +38,7 @@ function AutomationPage() {
       <h1 className="text-2xl font-bold mb-4">自动化</h1>
       <p className="text-muted-foreground">这里是自动化页面内容</p>
     </div>
-  )
+  );
 }
 
 function TestCasesPage() {
@@ -47,7 +47,7 @@ function TestCasesPage() {
       <h1 className="text-2xl font-bold mb-4">测试用例</h1>
       <p className="text-muted-foreground">这里是测试用例页面内容</p>
     </div>
-  )
+  );
 }
 
 function getPageTitle(activePage: string) {
@@ -59,33 +59,32 @@ function getPageTitle(activePage: string) {
     reports: "测试报告",
     automation: "自动化",
     settings: "设置",
-  }
-  return titles[activePage as keyof typeof titles] || "项目管理"
+  };
+  return titles[activePage as keyof typeof titles] || "项目管理";
 }
 function App() {
-  const [activePage, setActivePage] = useState("projects")
+  const [activePage, setActivePage] = useState("dashboard");
 
   const renderPage = () => {
     switch (activePage) {
       case "dashboard":
-        return <DashboardPage />
+        return <DashboardPage />;
       case "projects":
-        return <ProjectManagement />
+        return <ProjectManagement />;
       case "test-cases":
-        return <TestCasesPage />
+        return <TestCasesPage />;
       case "ai-analysis":
-        return <AIAnalysisPage />
+        return <AIAnalysisPage />;
       case "reports":
-        return <ReportsPage />
+        return <ReportsPage />;
       case "automation":
-        return <AutomationPage />
+        return <AutomationPage />;
       case "settings":
-        return <Settings />
+        return <Settings />;
       default:
-        return <ProjectManagement />
+        return <ProjectManagement />;
     }
-  }
-
+  };
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
@@ -98,7 +97,10 @@ function App() {
           <div className="flex-shrink-0 p-2 bg-card border rounded-lg shadow-sm">
             <div className="flex items-center justify-between">
               <div className="flex">
-                <ChevronRight className="w-5 h-5 mr-1 text-muted-foreground" /><h1 className="text-sm font-bold tracking-tight">{getPageTitle(activePage)}</h1>
+                <ChevronRight className="w-5 h-5 mr-1 text-muted-foreground" />
+                <h1 className="text-sm font-bold tracking-tight">
+                  {getPageTitle(activePage)}
+                </h1>
               </div>
             </div>
           </div>
