@@ -110,7 +110,6 @@ function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-
     autoHideMenuBar: true,
     center: true,
     webPreferences: {
@@ -119,7 +118,7 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegrationInSubFrames: false,
     },
-    // titleBarStyle: "hidden",
+    titleBarStyle: "hidden",
   });
 
   // 根据开发环境加载不同的URL
@@ -139,6 +138,23 @@ function createWindow() {
       pythonProcess.kill();
       pythonProcess = null;
     }
+  });
+
+  // 监听窗口控制事件
+  ipcMain.on("window-minimize", () => {
+    mainWindow.minimize();
+  });
+
+  ipcMain.on("window-maximize", () => {
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow.maximize();
+    }
+  });
+
+  ipcMain.on("window-close", () => {
+    mainWindow.close();
   });
 }
 

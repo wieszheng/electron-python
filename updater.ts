@@ -3,20 +3,7 @@ import { autoUpdater } from "electron-updater";
 
 // 配置自动更新
 function configureAutoUpdater() {
-  // 设置更新服务器地址（使用 S3 provider）
-  autoUpdater.setFeedURL({
-    provider: "s3",
-    bucket: process.env.ELECTRON_UPDATER_S3_BUCKET || "your-app-updates", // S3 存储桶名称
-    region: process.env.ELECTRON_UPDATER_S3_REGION || "us-east-1", // S3 区域
-    path: process.env.ELECTRON_UPDATER_S3_PATH || "/updates", // S3 路径前缀
-    // 可选：如果使用自定义 S3 端点（如 MinIO）
-    endpoint: process.env.ELECTRON_UPDATER_S3_ENDPOINT || undefined,
-    // 可选：如果需要强制使用路径样式的 URL
-    forcePathStyle:
-      process.env.ELECTRON_UPDATER_S3_FORCE_PATH_STYLE === "true" || false,
-  });
-
-  // 禁用自动下载，只在用户确认后下载
+  // 禁用自动下载，只在用户确认后下载http://82.157.176.120:9000/code/0.1.0/
   autoUpdater.autoDownload = false;
 }
 
@@ -33,9 +20,9 @@ function initializeAutoUpdate(mainWindow: BrowserWindow) {
   setupUpdateEvents(mainWindow);
 
   // 延迟5秒后检查更新（给应用启动留出时间）
-  // setTimeout(() => {
-  //   checkForUpdatesSilently();
-  // }, 5000);
+  setTimeout(() => {
+    checkForUpdatesSilently();
+  }, 5000);
 }
 
 // 设置更新事件处理

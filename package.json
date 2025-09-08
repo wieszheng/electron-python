@@ -1,9 +1,11 @@
 {
   "name": "electron-python",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.0.9",
   "main": "dist-electron/main.js",
   "type": "module",
+  "description": "Electron + Python = ❤️",
+  "author": "wieszheng",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -79,12 +81,7 @@
         }
       ]
     },
-    "win": {
-      "target": "nsis",
-      "arch": [
-        "x64"
-      ]
-    },
+
     "linux": {
       "target": [
         {
@@ -94,6 +91,11 @@
           ]
         }
       ]
+    },
+    "publish": {
+      "provider": "generic",
+      "url": "http://82.157.176.120:9000/code/0.1.0/",
+      "channel": "latest"
     }
   }
 }

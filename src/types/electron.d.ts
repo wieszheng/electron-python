@@ -1,6 +1,7 @@
 // Electron API接口类型定义
 export interface ElectronAPI {
   // 版本信息
+  ipcRenderer: any;
   node: () => string;
   electron: () => string;
   chrome: () => string;

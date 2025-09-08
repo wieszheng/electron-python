@@ -109,11 +109,11 @@ export function Settings() {
     }
   }, []);
   return (
-    <div className="flex-1 p-3 space-y-6">
+    <div className="flex-1 space-y-6">
       <div className="grid gap-3">
         {/* 通知设置 */}
 
-        <div className="p-2">
+        <div className="p-2 bg-card border rounded-lg shadow-sm">
           <h3 className="text-lg font-semibold mb-4">通知设置</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -147,7 +147,7 @@ export function Settings() {
         </div>
 
         {/* 系统信息 */}
-        <div className="p-3">
+        <div className="p-3 bg-card border rounded-lg shadow-sm">
           <h3 className="text-lg font-semibold mb-4">系统信息</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">

@@ -79,7 +79,7 @@ export function Sidebar({
   return (
     <div
       className={cn(
-        "flex flex-col h-full transition-all duration-300 ease-in-out bg-card border rounded-lg shadow-sm",
+        "flex flex-col h-full transition-all duration-300 ease-in-out border-r bg-sidebar",
         isHovered ? "w-44" : "w-16",
         className,
       )}

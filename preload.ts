@@ -7,6 +7,9 @@ contextBridge.exposeInMainWorld("electron", {
   chrome: () => process.versions.chrome,
   electron: () => process.versions.electron,
 
+  ipcRenderer: {
+    send: (channel, ...args) => ipcRenderer.send(channel, ...args),
+  },
   // API请求转发
   callApi: (method: string, endpoint: string, data?: any) => {
     return ipcRenderer.invoke("call-api", { method, endpoint, data });
