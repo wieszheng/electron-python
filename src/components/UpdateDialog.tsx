@@ -184,10 +184,7 @@ export function UpdateDialog({
                 >
                   立即更新
                 </Button>
-                <Button
-                  onClick={onClose}
-                  className="px-4 py-2 border rounded-lg hover:bg-muted transition-colors"
-                >
+                <Button onClick={onClose} variant="outline">
                   稍后提醒
                 </Button>
               </div>
@@ -239,12 +236,9 @@ export function UpdateDialog({
         {/* 已是最新版本状态 */}
         {updateStatus?.status === "up-to-date" && (
           <div className="text-center py-4">
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-green-600 text-xl">✓</span>
-            </div>
             <p className="font-medium mb-1">已是最新版本</p>
             <p className="text-sm text-muted-foreground">
-              当前版本 v{updateStatus.versionInfo?.version || "未知"}
+              当前版本: {updateStatus.versionInfo?.version || "未知"}
             </p>
           </div>
         )}

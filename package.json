@@ -1,7 +1,7 @@
 {
   "name": "electron-python",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.0.9",
   "main": "dist-electron/main.js",
   "type": "module",
   "description": "Electron + Python = ❤️",
