@@ -1,167 +1,158 @@
-import { app, dialog, ipcMain, BrowserWindow } from "electron";
 import { autoUpdater } from "electron-updater";
+import { BrowserWindow, ipcMain, app } from "electron";
+import log from "electron-log";
 
-// 配置自动更新
-function configureAutoUpdater() {
-  // 禁用自动下载，只在用户确认后下载http://82.157.176.120:9000/code/0.1.0/
+// --- 类型定义 ---
+export interface UpdateStatus {
+  status:
+    | "checking"
+    | "update-available"
+    | "downloading"
+    | "progress"
+    | "ready"
+    | "up-to-date"
+    | "error";
+  message: string;
+  // 可以添加版本信息
+  versionInfo?: { version: string; releaseDate: string; releaseNotes?: string };
+  progress?: number; // 0-100
+}
+
+// --- 状态发送函数 ---
+let mainWindow: BrowserWindow;
+
+function sendStatusToWindow(status: UpdateStatus) {
+  log.info("🚢 ~ 主进程检测更新 Updater Status:", status);
+  mainWindow?.webContents.send("update-status", status);
+}
+
+// --- 初始化函数 ---
+export function initializeAutoUpdater(win: BrowserWindow) {
+  mainWindow = win;
+
+  // --- 日志配置 ---
+  log.transports.file.level = "info";
+  autoUpdater.logger = log;
+
+  // 是否自动下载更新
   autoUpdater.autoDownload = false;
-}
+  // 开启开发环境调试，后边会有说明
+  autoUpdater.forceDevUpdateConfig = true;
 
-// 初始化自动更新
-function initializeAutoUpdate(mainWindow: BrowserWindow) {
-  if (!app.isPackaged) {
-    console.log(
-      "[Updater] Do not initialize automatic updates in the development environment.",
-    );
-    return;
-  }
+  // 监听升级失败事件
+  autoUpdater.on("error", (err) => {
+    log.error("🚢 ~ 主进程检测更新 ~ 监听升级失败事件:", err);
+    sendStatusToWindow({
+      status: "error",
+      message: `更新出错: ${err.message || err.toString()}`,
+    });
+  });
 
-  configureAutoUpdater();
-  setupUpdateEvents(mainWindow);
-
-  // 延迟5秒后检查更新（给应用启动留出时间）
-  setTimeout(() => {
-    checkForUpdatesSilently();
-  }, 5000);
-}
-
-// 设置更新事件处理
-function setupUpdateEvents(mainWindow: BrowserWindow) {
-  // 有可用更新时触发
+  // 监听发现可用更新事件
   autoUpdater.on("update-available", (info) => {
-    console.log("[Updater] Discover the new version:", info.version);
-
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      (
-        dialog.showMessageBox(mainWindow, {
-          type: "info",
-          title: "发现更新",
-          message: `发现新版本: ${info.version}`,
-          detail: "是否立即下载更新？",
-          buttons: ["立即下载", "稍后提醒"],
-        }) as unknown as Promise<Electron.MessageBoxReturnValue>
-      )
-        .then((result) => {
-          if (result.response === 0) {
-            // 用户选择立即下载
-            autoUpdater.downloadUpdate();
-          }
-        })
-        .catch((error) => {
-          console.error("[Updater] Dialog error:", error);
-        });
-    }
+    log.info(
+      `🚢 ~ 主进程检测更新 ~ 监听发现可用更新事件 Update available: ${info}`,
+    );
+    sendStatusToWindow({
+      status: "update-available",
+      message: `发现新版本 v${info.version}！`,
+      versionInfo: {
+        version: info.version,
+        releaseDate: info.releaseDate,
+      },
+    });
   });
 
-  // 没有可用更新时触发
-  autoUpdater.on("update-not-available", () => {
-    console.log("[Updater] 当前已是最新版本");
+  // 监听没有可用更新事件
+  autoUpdater.on("update-not-available", (info) => {
+    log.info("🚢 ~ 主进程检测更新 ~ 监听没有可用更新事件:", info);
+    sendStatusToWindow({
+      status: "up-to-date",
+      message: `当前已是最新版本 (v${app.getVersion()})`,
+    });
   });
 
-  // 更新下载完成时触发
+  // 更新下载进度事件
+  autoUpdater.on("download-progress", (progressObj) => {
+    log.info("🚀 ~ 主进程检测更新 ~ 更新下载进度事件:", progressObj);
+    const progress = Math.round(progressObj.percent);
+    sendStatusToWindow({
+      status: "progress",
+      message: `下载进度: ${progress}%`,
+      progress,
+    });
+  });
+
+  // 监听下载完成事件
   autoUpdater.on("update-downloaded", (info) => {
-    console.log("[Updater] 更新下载完成:", info.version);
-
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      (
-        dialog.showMessageBox(mainWindow, {
-          type: "info",
-          title: "更新下载完成",
-          message: `更新已下载完成: ${info.version}`,
-          detail: "应用将在重启后应用更新。是否立即重启应用？",
-          buttons: ["立即重启", "稍后重启"],
-        }) as unknown as Promise<Electron.MessageBoxReturnValue>
-      )
-        .then((result) => {
-          if (result.response === 0) {
-            // 用户选择立即重启
-            autoUpdater.quitAndInstall();
-          }
-        })
-        .catch((error) => {
-          console.error("[Updater] Dialog error:", error);
-        });
-    }
+    log.info("🚀 ~ 主进程检测更新 ~ 监听更新下载完成事件:", info);
+    sendStatusToWindow({
+      status: "ready",
+      message: `新版本 v${info.version} 已下载完成`,
+    });
   });
 
-  // 更新错误时触发
-  autoUpdater.on("error", (error) => {
-    console.error("[Updater] 更新错误:", error);
+  // --- 事件监听 ---
+  autoUpdater.on("checking-for-update", () => {
+    sendStatusToWindow({ status: "checking", message: "正在检查更新..." });
+  });
 
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      dialog.showMessageBox(mainWindow, {
-        type: "error",
-        title: "更新失败",
-        message: "检查更新时发生错误",
-        detail: error.message,
-        buttons: ["确定"],
+  // --- IPC 监听：处理用户对更新提示的响应 ---
+  ipcMain.handle(
+    "user-response-to-update",
+    async (_event, action: "download" | "cancel") => {
+      log.info("🚀 ~ 主进程检测更新 ~ 用户对更新提示的响应:", action);
+      if (action === "download") {
+        try {
+          // 用户选择下载，开始下载更新
+          await autoUpdater.downloadUpdate();
+          sendStatusToWindow({
+            status: "downloading",
+            message: "开始下载更新...",
+          });
+        } catch (err) {
+          log.error("Error starting download:", err);
+          sendStatusToWindow({
+            status: "error",
+            message: `启动下载失败: ${err.message || err.toString()}`,
+          });
+        }
+      } else {
+        // 用户选择取消，可以记录日志或发送确认消息
+        log.info("User cancelled the update.");
+        // 可以选择发送一个状态确认取消，或者不做任何事
+        // 这里我们简单地发一个 up-to-date 状态来关闭提示
+        sendStatusToWindow({ status: "up-to-date", message: "已取消本次更新" });
+      }
+    },
+  );
+
+  // --- IPC 监听：处理用户选择立即安装 (下载完成后) ---
+  ipcMain.handle("install-update-now", async () => {
+    log.info("User chose to install update now.");
+    // 确保在安装前保存任何用户数据
+    // 可以添加一个短暂的延迟，让UI有时间显示"正在安装"消息
+    setTimeout(() => {
+      autoUpdater.quitAndInstall();
+    }, 500);
+  });
+
+  // 接收渲染进程消息，开始检查更新
+  ipcMain.handle("check-for-update", async () => {
+    log.info("🚀 ~ 主进程检测更新 ~ 手动检查更新");
+    try {
+      await autoUpdater.checkForUpdates();
+    } catch (error) {
+      log.error("Error during manual check:", error);
+      sendStatusToWindow({
+        status: "error",
+        message: `检查更新失败: ${error.message || "未知错误"}`,
       });
     }
   });
 
-  // 更新下载进度事件
-  autoUpdater.on("download-progress", (progress) => {
-    const percent = Math.round(progress.percent);
-    console.log(`[Updater] 下载进度: ${percent}%`);
-
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send("update-progress", percent);
-    }
-  });
+  // --- 启动时自动检查 ---
+  // setTimeout(() => {
+  //   autoUpdater.checkForUpdates();
+  // }, 5000);
 }
-
-// 静默检查更新（不弹出对话框）
-async function checkForUpdatesSilently() {
-  if (!app.isPackaged) {
-    console.log("[Updater] 开发环境下不检查更新");
-    return;
-  }
-
-  try {
-    console.log("[Updater] 静默检查更新");
-    await autoUpdater.checkForUpdates();
-  } catch (error) {
-    console.error("[Updater] 静默检查更新失败:", error);
-  }
-}
-
-// 手动检查更新
-async function checkForUpdatesManually() {
-  if (!app.isPackaged) {
-    console.log("[Updater] 开发环境下不检查更新");
-    return;
-  }
-
-  try {
-    console.log("[Updater] 手动检查更新");
-    await autoUpdater.checkForUpdates();
-  } catch (error) {
-    console.error("[Updater] 手动检查更新失败:", error);
-    throw new Error(
-      `检查更新失败: ${error instanceof Error ? error.message : "未知错误"}`,
-    );
-  }
-}
-
-// 立即退出并安装更新
-function quitAndInstallUpdate() {
-  if (app.isPackaged) {
-    console.log("[Updater] 立即退出并安装更新");
-    autoUpdater.quitAndInstall();
-  }
-}
-
-// 注册IPC处理程序
-function registerIpcHandlers() {
-  // 手动检查更新
-  ipcMain.handle("check-for-updates", async () => {
-    return checkForUpdatesManually();
-  });
-
-  // 立即退出并安装更新
-  ipcMain.handle("quit-and-install-update", () => {
-    quitAndInstallUpdate();
-  });
-}
-
-export { initializeAutoUpdate, registerIpcHandlers };

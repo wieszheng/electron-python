@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
+import { UpdateStatus } from "./updater";
 
 // 暴露API到渲染进程
 contextBridge.exposeInMainWorld("electron", {
@@ -21,19 +22,15 @@ contextBridge.exposeInMainWorld("electron", {
   },
 
   // 自动更新相关API
-  checkForUpdates: (): Promise<void> => {
-    return ipcRenderer.invoke("check-for-updates");
-  },
+  checkForUpdate: (): Promise<void> => ipcRenderer.invoke("check-for-update"),
 
   // 监听更新进度事件
-  onUpdateProgress: (callback: (progress: number) => void) => {
-    const listener = (_event: any, progress: number) => callback(progress);
-    ipcRenderer.on("update-progress", listener);
-    return () => ipcRenderer.removeListener("update-progress", listener);
-  },
+  onUpdateStatus: (callback: (status: UpdateStatus) => void) =>
+    ipcRenderer.on("update-status", (_event, value) => callback(value)),
+  removeUpdateStatusListener: (callback) =>
+    ipcRenderer.removeListener("update-status", callback),
+  respondToUpdatePrompt: (action) =>
+    ipcRenderer.invoke("user-response-to-update", action),
 
-  // 立即安装更新
-  quitAndInstallUpdate: (): Promise<void> => {
-    return ipcRenderer.invoke("quit-and-install-update");
-  },
+  installUpdateNow: () => ipcRenderer.invoke("install-update-now"),
 });

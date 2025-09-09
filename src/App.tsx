@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { Sidebar } from "@/components/sidebar";
-import { ChevronRight, Minus, Square, X } from "lucide-react";
+import { ChevronRight, Minus, Sparkles, Square, X } from "lucide-react";
 import { ProjectManagement } from "@/components/Project";
 import { Settings } from "@/components/Settings";
 import { Dashboard } from "@/components/Dashboard.tsx";
@@ -96,10 +96,10 @@ function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <div className="flex flex-col h-screen bg-background">
-        <div className="flex-shrink-0 h-8 bg-card flex items-center justify-between px-4 electron-drag">
+        <div className="flex-shrink-0 h-8 bg-card flex items-center justify-between px-3 pt-2 electron-drag">
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground electron-no-drag">
-            <span className="text-primary">🤖</span>
-            <span>APP UI 自动化测试平台</span>
+            <Sparkles className="h-5 w-5 text-red-500" />
+            <span>E-Py</span>
           </div>
           <WindowControls />
         </div>

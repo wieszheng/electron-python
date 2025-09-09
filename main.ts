@@ -3,7 +3,7 @@ import { join } from "path";
 import * as fs from "node:fs";
 import { spawn, ChildProcessWithoutNullStreams } from "child_process";
 import getPort from "get-port";
-import { initializeAutoUpdate, registerIpcHandlers } from "./updater";
+import { initializeAutoUpdater } from "./updater";
 
 const isDev = app.isPackaged;
 
@@ -131,7 +131,7 @@ function createWindow() {
     // 打开开发者工具
     mainWindow.webContents.openDevTools();
   }
-  initializeAutoUpdate(mainWindow);
+  initializeAutoUpdater(mainWindow);
   // 窗口关闭事件
   mainWindow.on("closed", () => {
     if (pythonProcess) {
@@ -182,7 +182,7 @@ ipcMain.handle("call-api", async (_, { method, endpoint, data }) => {
 ipcMain.handle("get-backend-port", () => {
   return BACKEND_PORT;
 });
-registerIpcHandlers();
+
 // 应用事件
 app.on("ready", async () => {
   await startPythonServer();
@@ -193,7 +193,7 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
   }
-  // if (pythonProcess) pythonProcess.kill();
+  if (pythonProcess) pythonProcess.kill();
 });
 
 app.on("activate", () => {
