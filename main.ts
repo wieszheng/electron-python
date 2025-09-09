@@ -78,6 +78,9 @@ async function startPythonServer() {
     pythonProcess = spawn(
       join(process.resourcesPath, "backend", "backend_main.exe"),
       ["--port", BACKEND_PORT.toFixed()],
+      {
+        env: { ...process.env, ELECTRON_RUN: "1" },
+      },
     );
   }
 

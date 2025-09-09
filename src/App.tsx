@@ -96,9 +96,9 @@ function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <div className="flex flex-col h-screen bg-background">
-        <div className="flex-shrink-0 h-8 bg-card flex items-center justify-between px-3 pt-2 electron-drag">
+        <div className="flex-shrink-0 h-9 bg-card flex items-center justify-between px-3 pt-2 electron-drag">
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground electron-no-drag">
-            <Sparkles className="h-5 w-5 text-red-500" />
+            <Sparkles className="h-5 w-5 text-primary" />
             <span>E-Py</span>
           </div>
           <WindowControls />
